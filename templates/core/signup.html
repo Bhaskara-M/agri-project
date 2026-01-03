@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+  <div class="p-4 rounded" 
+       style="max-width: 420px; width: 100%; background:#1a1a1a; border:1px solid rgba(0,255,0,0.3); box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    
+    <h4 class="text-success mb-3 text-center">Create Account</h4>
+
+    {% if messages %}
+      {% for m in messages %}
+        <div class="alert alert-{{ m.tags }}">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" class="form-clean">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label text-light">Username</label>
+        {{ form.username }}
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-light">Email</label>
+        {{ form.email }}
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-light">Password</label>
+        {{ form.password }}
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-light">Confirm Password</label>
+        {{ form.confirm_password }}
+      </div>
+      <button class="btn btn-pro w-100" type="submit">Sign Up</button>
+    </form>
+
+    <hr class="border-success">
+    <p class="text-center mb-0 text-light">
+      Already have an account?
+      <a href="{% url 'login' %}" class="text-success fw-bold">Login here</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
