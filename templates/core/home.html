@@ -1,31 +1,577 @@
 {% extends 'base.html' %}
-{% block title %}Home{% endblock %}
-{% block content %}
-<div class="row">
-  <!-- Sidebar -->
-  <aside class="col-12 col-md-3 col-lg-2 bg-dark border-end border-success min-vh-100 pt-3">
-    <ul class="nav flex-column">
-      <li class="nav-item">
-        <a class="nav-link text-light fw-semibold" href="{% url 'predict' %}">Prediction Engine</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link text-light fw-semibold" href="{% url 'logs' %}">Log Data</a>
-      </li>
-    </ul>
-  </aside>
+{% block title %}Home - Agri AI{% endblock %}
 
-  <!-- Main Content -->
-  <main class="col-12 col-md-9 col-lg-10 p-4">
-    <h3 class="text-success">Dashboard</h3>
-    <p class="text-light">
-      Welcome to <strong>Agri AI</strong>. Use the sidebar to navigate between prediction tools and your log history.
-    </p>
-    <hr class="border-success">
-    <div class="mt-3">
-      <p class="text-muted">Quick Links:</p>
-      <a href="{% url 'predict' %}" class="btn btn-pro me-2">Start Prediction</a>
-      <a href="{% url 'logs' %}" class="btn btn-pro">View Logs</a>
-    </div>
-  </main>
+{% block content %}
+<style>
+  /* Add padding to body to account for floating navbar */
+  body {
+    padding-top: 140px !important;
+  }
+
+  /* Glassmorphic Sidebar - Enlarged */
+  .sidebar-glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(212, 244, 221, 0.5) 100%);
+    border: 2.5px solid rgba(16, 185, 129, 0.4);
+    border-radius: 25px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 12px 48px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 30px rgba(16, 185, 129, 0.15);
+    padding: 32px 24px !important;
+    margin-bottom: 32px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-glass:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(212, 244, 221, 0.65) 100%);
+    box-shadow: 0 18px 60px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 1), 0 0 40px rgba(16, 185, 129, 0.25);
+  }
+
+  /* Sidebar Navigation Links - Enhanced */
+  .sidebar-glass .nav-link {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.05) 100%);
+    color: #1a5f3b !important;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 16px 20px;
+    border-radius: 16px;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+    overflow: hidden;
+  }
+
+  .sidebar-glass .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    transition: left 0.4s ease;
+  }
+
+  .sidebar-glass .nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: linear-gradient(180deg, #10b981, #34d399);
+    border-radius: 12px 0 0 12px;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar-glass .nav-link:hover {
+    color: #10b981 !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(52, 211, 153, 0.15) 100%);
+    transform: translateX(12px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  }
+
+  .sidebar-glass .nav-link:hover::before {
+    transform: scaleY(1);
+  }
+
+  .sidebar-glass .nav-link:hover::after {
+    left: 0;
+  }
+
+  /* Team Button */
+  .team-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    color: white;
+    border: none;
+    padding: 16px 20px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-top: 16px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .team-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .team-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+
+  .team-btn:hover::before {
+    left: 100%;
+  }
+
+  .team-btn.active {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Team Members Container */
+  .team-members {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+    margin-top: 0;
+  }
+
+  .team-members.show {
+    max-height: 800px;
+    opacity: 1;
+    margin-top: 16px;
+  }
+
+  /* Team Member Card */
+  .team-member {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.08) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.25);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: slideInLeft 0.4s ease forwards;
+    opacity: 0;
+  }
+
+  .team-member:nth-child(1) { animation-delay: 0s; }
+  .team-member:nth-child(2) { animation-delay: 0.1s; }
+  .team-member:nth-child(3) { animation-delay: 0.2s; }
+  .team-member:nth-child(4) { animation-delay: 0.3s; }
+  .team-member:nth-child(5) { animation-delay: 0.4s; }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .team-member:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.15) 100%);
+    border-color: rgba(16, 185, 129, 0.5);
+    transform: translateX(6px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  }
+
+  .team-member-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #34d399);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  }
+
+  .team-member-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .team-member-name {
+    color: #1a5f3b;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .team-member-role {
+    color: #059669;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Dashboard Header */
+  .dashboard-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(212, 244, 221, 0.4) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 32px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    animation: slideDown 0.5s ease;
+  }
+
+  .dashboard-header h1 {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #22c55e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    text-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+    background-size: 300% auto;
+    animation: gradientFlow 6s ease infinite;
+  }
+
+  .dashboard-header p {
+    color: #1a5f3b;
+    font-size: 1.15rem;
+    margin: 0;
+    font-weight: 600;
+    animation: fadeInUp 0.8s ease 0.3s both;
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Prediction Cards - Glassmorphism */
+  .card-glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(212, 244, 221, 0.5) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  .card-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .card-glass:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(212, 244, 221, 0.65) 100%);
+    border-color: rgba(16, 185, 129, 0.6);
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
+  .card-glass:hover::before {
+    opacity: 1;
+  }
+
+  .card-glass .card-body {
+    padding: 32px 24px;
+    text-align: center;
+  }
+
+  .card-glass .card-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .card-glass .card-icon:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  .card-glass:nth-child(2) .card-icon {
+    animation-delay: 0.2s;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .card-glass .card-title {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 1.7rem;
+    margin-bottom: 16px;
+    text-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+    animation: titlePulse 2s ease-in-out infinite;
+    border-radius: 50px;
+  }
+
+  .card-glass .card-text {
+    color: #1a5f3b;
+    font-size: 1.05rem;
+    margin-bottom: 20px;
+    font-weight: 500;
+    opacity: 0.9;
+    line-height: 1.6;
+    animation: textReveal 0.8s ease 0.4s both;
+    border-radius: 50px;
+    padding: 20px;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @keyframes textReveal {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Cards Container */
+  .cards-container {
+    animation: fadeIn 0.6s ease 0.2s both;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    body {
+      padding-top: 160px !important;
+    }
+
+    .dashboard-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .sidebar-glass {
+      margin-bottom: 24px;
+      padding: 16px 12px !important;
+    }
+
+    .card-glass .card-body {
+      padding: 20px 16px;
+    }
+
+    .card-glass .card-title {
+      font-size: 1.2rem;
+    }
+
+    .sidebar-glass .nav-link {
+      padding: 10px 12px;
+      font-size: 0.95rem;
+    }
+
+    .team-btn {
+      font-size: 0.95rem;
+      padding: 14px 16px;
+    }
+
+    .team-member-name {
+      font-size: 0.9rem;
+    }
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Glassmorphic Sidebar - Wider -->
+    <aside class="col-12 col-md-4 col-lg-3">
+      <div class="sidebar-glass">
+        <h6 style="color: #059669; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">Navigation</h6>
+        <nav class="nav flex-column">
+          <a class="nav-link" href="{% url 'logs' %}">📊 Manual Logs</a>
+          <a class="nav-link" href="{% url 'pdf_logs' %}">📑 File Logs</a>
+        </nav>
+
+        <!-- Team Button & Members -->
+        <button class="team-btn" onclick="toggleTeam(this)">
+          👥 Our Team
+          <span style="font-size: 1.2rem; margin-left: auto;">▼</span>
+        </button>
+
+        <div class="team-members" id="teamMembers">
+          <div class="team-member">
+            <div class="team-member-avatar">MT</div>
+            <div class="team-member-info">
+              <p class="team-member-name">Mr. M. Thanigavel</p>
+              <p class="team-member-role">Project Guide</p>
+            </div>
+          </div>
+
+          <div class="team-member">
+            <div class="team-member-avatar">MB</div>
+            <div class="team-member-info">
+              <p class="team-member-name">M. Bhaskara</p>
+              <p class="team-member-role">Team Lead</p>
+            </div>
+          </div>
+
+          <div class="team-member">
+            <div class="team-member-avatar">AH</div>
+            <div class="team-member-info">
+              <p class="team-member-name">A. Hemasri</p>
+              <p class="team-member-role">Team Member</p>
+            </div>
+          </div>
+
+          <div class="team-member">
+            <div class="team-member-avatar">AG</div>
+            <div class="team-member-info">
+              <p class="team-member-name">A.G. Gowtham</p>
+              <p class="team-member-role">Team Member</p>
+            </div>
+          </div>
+
+          <div class="team-member">
+            <div class="team-member-avatar">NJ</div>
+            <div class="team-member-info">
+              <p class="team-member-name">N Jayanth</p>
+              <p class="team-member-role">Team Member</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="col-12 col-md-8 col-lg-9">
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1>🌾 Dashboard</h1>
+        <p>Welcome to <strong>Agri AI</strong>. Use the prediction tools below to analyze soil health and crop conditions with AI-powered insights.</p>
+      </div>
+
+      <!-- Prediction Cards -->
+      <div class="row g-4 cards-container">
+        <!-- Manual Predict Card -->
+        <div class="col-md-6">
+          <div class="card-glass h-100">
+            <div class="card-body">
+              <div class="card-icon">🌱</div>
+              <h5 class="card-title">Manual Predict</h5>
+              <p class="card-text">
+                Enter soil values manually to get instant predictions with confidence scores and detailed analysis.
+              </p>
+              <a href="{% url 'predict' %}" class="btn btn-pro">Start Prediction</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Predict Card -->
+        <div class="col-md-6">
+          <div class="card-glass h-100">
+            <div class="card-body">
+              <div class="card-icon">📂</div>
+              <h5 class="card-title">File Predict</h5>
+              <p class="card-text">
+                Upload soil test files for automated analysis and AI-powered insights in batch mode.
+              </p>
+              <a href="{% url 'predict_file' %}" class="btn btn-pro">Upload File</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
+
+<script>
+  function toggleTeam(button) {
+    const teamMembers = document.getElementById('teamMembers');
+    const icon = button.querySelector('span');
+    
+    teamMembers.classList.toggle('show');
+    button.classList.toggle('active');
+    
+    // Rotate arrow icon
+    if (teamMembers.classList.contains('show')) {
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
+</script>
+
 {% endblock %}

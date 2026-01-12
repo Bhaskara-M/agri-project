@@ -12,6 +12,7 @@ from sklearn.metrics import (
     classification_report,
     roc_auc_score,
 )
+from sklearn.pipeline import Pipeline
 import joblib
 
 # Step 1: Generate synthetic dataset (replace with real CSV if available)
@@ -52,24 +53,24 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Step 4: Scale features
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+# Step 4: Build pipeline (scaler + MLP)
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('mlp', MLPClassifier(
+        hidden_layer_sizes=(64, 32),
+        activation="relu",
+        solver="adam",
+        max_iter=500,
+        random_state=42
+    ))
+])
 
-# Step 5: Train MLPClassifier
-mlp = MLPClassifier(
-    hidden_layer_sizes=(64, 32),
-    activation="relu",
-    solver="adam",
-    max_iter=500,
-    random_state=42
-)
-mlp.fit(X_train_scaled, y_train)
+# Step 5: Train pipeline
+pipeline.fit(X_train, y_train)
 
 # Step 6: Predictions
-y_pred = mlp.predict(X_test_scaled)
-y_prob = mlp.predict_proba(X_test_scaled)[:, 1]
+y_pred = pipeline.predict(X_test)
+y_prob = pipeline.predict_proba(X_test)[:, 1]
 
 # Step 7: Metrics
 print("🔹 Accuracy:", accuracy_score(y_test, y_pred))
@@ -80,8 +81,7 @@ print("🔹 ROC-AUC:", roc_auc_score(y_test, y_prob))
 print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
 
-# Step 8: Save model and scaler
-joblib.dump(mlp, "soil_model.joblib")
-joblib.dump(scaler, "scaler.joblib")
+# Step 8: Save pipeline (model + scaler together)
+joblib.dump(pipeline, "soil_pipeline.joblib")
 
-print("\n✅ MLP model and scaler saved successfully!")
+print("\n✅ Soil prediction pipeline saved successfully!")

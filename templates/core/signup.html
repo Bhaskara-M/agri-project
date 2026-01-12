@@ -1,44 +1,433 @@
 {% extends 'base.html' %}
-{% block title %}Sign Up{% endblock %}
-{% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
-  <div class="p-4 rounded" 
-       style="max-width: 420px; width: 100%; background:#1a1a1a; border:1px solid rgba(0,255,0,0.3); box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-    
-    <h4 class="text-success mb-3 text-center">Create Account</h4>
+{% block title %}Sign Up - Agri AI{% endblock %}
 
+{% block content %}
+<style>
+  /* Signup Container */
+  .signup-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 20px 40px 20px;
+    animation: fadeInUp 0.8s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Signup Card - Glassmorphism */
+  .signup-card {
+    max-width: 450px;
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(212, 244, 221, 0.5) 100%);
+    border: 2.5px solid rgba(16, 185, 129, 0.4);
+    border-radius: 25px;
+    padding: 40px;
+    box-shadow: 0 12px 48px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 30px rgba(16, 185, 129, 0.15);
+    backdrop-filter: blur(15px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .signup-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .signup-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(212, 244, 221, 0.65) 100%);
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 16px 60px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 1), 0 0 40px rgba(16, 185, 129, 0.2);
+    transform: translateY(-8px);
+  }
+
+  .signup-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Signup Header */
+  .signup-header {
+    text-align: center;
+    margin-bottom: 32px;
+    animation: slideDown 0.6s ease 0.2s both;
+  }
+
+  .signup-header h2 {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #22c55e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    background-size: 300% auto;
+    animation: gradientFlow 6s ease infinite;
+  }
+
+  .signup-header p {
+    color: #1a5f3b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Alert Messages */
+  .alert-pro-signup {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.1) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    color: #1a5f3b;
+    border-radius: 14px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.1);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    animation: slideInDown 0.4s ease;
+    font-weight: 500;
+  }
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Form Group */
+  .form-group-signup {
+    margin-bottom: 18px;
+    animation: fadeInForm 0.6s ease both;
+  }
+
+  .form-group-signup:nth-child(1) { animation-delay: 0.3s; }
+  .form-group-signup:nth-child(2) { animation-delay: 0.4s; }
+  .form-group-signup:nth-child(3) { animation-delay: 0.5s; }
+  .form-group-signup:nth-child(4) { animation-delay: 0.6s; }
+  .form-group-signup:nth-child(5) { animation-delay: 0.7s; }
+
+  @keyframes fadeInForm {
+    from {
+      opacity: 0;
+      transform: translateX(-15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Form Label */
+  .signup-label {
+    display: block;
+    color: #1a5f3b;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+  }
+
+  /* Form Input */
+  .signup-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    color: #1a5f3b;
+    border-radius: 14px;
+    padding: 12px 16px;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-family: inherit;
+    font-size: 0.95rem;
+    backdrop-filter: blur(5px);
+  }
+
+  .signup-input::placeholder {
+    color: rgba(26, 95, 59, 0.5);
+  }
+
+  .signup-input:focus {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #10b981;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .signup-input:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  }
+
+  /* Submit Button - Using btn-pro style */
+  .signup-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border: none;
+    color: #fff;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+    animation: fadeInForm 0.6s ease 0.8s both;
+  }
+
+  .signup-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .signup-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+  }
+
+  .signup-btn:hover::before {
+    left: 100%;
+  }
+
+  .signup-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Divider */
+  .signup-divider {
+    border: none;
+    border-top: 2px solid rgba(16, 185, 129, 0.2);
+    margin: 24px 0;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .signup-divider:hover {
+    border-top-color: rgba(16, 185, 129, 0.4);
+  }
+
+  /* Login Section */
+  .login-section {
+    text-align: center;
+    animation: fadeInUp 0.8s ease 0.9s both;
+  }
+
+  .login-section p {
+    color: #1a5f3b;
+    font-size: 0.95rem;
+    margin: 0 0 12px 0;
+    font-weight: 500;
+  }
+
+  .login-link {
+    color: #10b981;
+    text-decoration: none;
+    font-weight: 700;
+    position: relative;
+    transition: all 0.3s ease;
+    display: inline-block;
+  }
+
+  .login-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    transition: width 0.3s ease;
+  }
+
+  .login-link:hover {
+    color: #34d399;
+  }
+
+  .login-link:hover::after {
+    width: 100%;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .signup-container {
+      padding: 100px 20px 40px 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .signup-container {
+      min-height: calc(100vh - 160px);
+      padding: 80px 20px 40px 20px;
+    }
+
+    .signup-card {
+      padding: 30px 20px;
+      border-radius: 20px;
+    }
+
+    .signup-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .signup-label {
+      font-size: 0.9rem;
+    }
+
+    .signup-input {
+      padding: 10px 14px;
+      font-size: 0.9rem;
+    }
+
+    .signup-btn {
+      padding: 10px 20px;
+      font-size: 0.95rem;
+    }
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+<div class="signup-container">
+  <div class="signup-card">
+    <!-- Header -->
+    <div class="signup-header">
+      <h2>🌱 Create Account</h2>
+      <p>Join Agri AI Community</p>
+    </div>
+
+    <!-- Messages -->
     {% if messages %}
-      {% for m in messages %}
-        <div class="alert alert-{{ m.tags }}">{{ m }}</div>
+      {% for message in messages %}
+        <div class="alert-pro-signup">
+          {{ message }}
+        </div>
       {% endfor %}
     {% endif %}
 
-    <form method="post" class="form-clean">
+    <!-- Signup Form -->
+    <form method="post">
       {% csrf_token %}
-      <div class="mb-3">
-        <label class="form-label text-light">Username</label>
-        {{ form.username }}
+
+      <!-- Username Field -->
+      <div class="form-group-signup">
+        <label for="username" class="signup-label">👤 Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="signup-input"
+          placeholder="Choose your username"
+          required
+          autocomplete="username"
+        />
       </div>
-      <div class="mb-3">
-        <label class="form-label text-light">Email</label>
-        {{ form.email }}
+
+      <!-- Email Field -->
+      <div class="form-group-signup">
+        <label for="email" class="signup-label">📧 Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          class="signup-input"
+          placeholder="Enter your email"
+          required
+          autocomplete="email"
+        />
       </div>
-      <div class="mb-3">
-        <label class="form-label text-light">Password</label>
-        {{ form.password }}
+
+      <!-- Password Field -->
+      <div class="form-group-signup">
+        <label for="password" class="signup-label">🔒 Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="signup-input"
+          placeholder="Create a strong password"
+          required
+          autocomplete="new-password"
+        />
       </div>
-      <div class="mb-3">
-        <label class="form-label text-light">Confirm Password</label>
-        {{ form.confirm_password }}
+
+      <!-- Confirm Password Field -->
+      <div class="form-group-signup">
+        <label for="confirm_password" class="signup-label">✓ Confirm Password</label>
+        <input
+          type="password"
+          id="confirm_password"
+          name="confirm_password"
+          class="signup-input"
+          placeholder="Confirm your password"
+          required
+          autocomplete="new-password"
+        />
       </div>
-      <button class="btn btn-pro w-100" type="submit">Sign Up</button>
+
+      <!-- Submit Button -->
+      <div class="form-group-signup">
+        <button type="submit" class="signup-btn">Sign Up</button>
+      </div>
     </form>
 
-    <hr class="border-success">
-    <p class="text-center mb-0 text-light">
-      Already have an account?
-      <a href="{% url 'login' %}" class="text-success fw-bold">Login here</a>
-    </p>
+    <!-- Divider -->
+    <div class="signup-divider"></div>
+
+    <!-- Login Section -->
+    <div class="login-section">
+      <p>Already have an account?</p>
+      <a href="{% url 'login' %}" class="login-link">Login here</a>
+    </div>
   </div>
 </div>
+
 {% endblock %}

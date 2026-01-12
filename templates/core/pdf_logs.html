@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+{% block title %}File Result Logs - Agri AI{% endblock %}
+
+{% block content %}
+<style>
+  /* Page Container */
+  .logs-container {
+    padding: 120px 20px 40px 20px;
+    min-height: calc(100vh - 200px);
+    animation: fadeInUp 0.8s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Page Header */
+  .logs-header {
+    margin-bottom: 40px;
+    animation: slideDown 0.6s ease 0.2s both;
+  }
+
+  .logs-header h2 {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #22c55e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    background-size: 300% auto;
+    animation: gradientFlow 6s ease infinite;
+  }
+
+  .logs-header p {
+    color: #1a5f3b;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Divider */
+  .logs-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    border: none;
+    margin-bottom: 32px;
+    border-radius: 2px;
+    animation: slideInRight 0.8s ease 0.4s both;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Logs Table Container */
+  .logs-table-wrapper {
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  /* Table Styles */
+  .logs-table {
+    border-collapse: separate;
+    border-spacing: 0 12px;
+    width: 100%;
+  }
+
+  .logs-table thead {
+    position: relative;
+    z-index: 10;
+  }
+
+  .logs-table thead th {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.1) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 16px 20px;
+    text-align: left;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+  }
+
+  .logs-table thead th:first-child {
+    border-radius: 12px 0 0 12px;
+  }
+
+  .logs-table thead th:last-child {
+    border-radius: 0 12px 12px 0;
+    text-align: center;
+  }
+
+  /* Table Body Rows - Individual Glassy Cards */
+  .logs-table tbody tr {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(212, 244, 221, 0.5) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: fadeInRow 0.6s ease both;
+  }
+
+  .logs-table tbody tr:nth-child(1) { animation-delay: 0.5s; }
+  .logs-table tbody tr:nth-child(2) { animation-delay: 0.55s; }
+  .logs-table tbody tr:nth-child(3) { animation-delay: 0.6s; }
+  .logs-table tbody tr:nth-child(4) { animation-delay: 0.65s; }
+  .logs-table tbody tr:nth-child(5) { animation-delay: 0.7s; }
+  .logs-table tbody tr:nth-child(n+6) { animation-delay: 0.75s; }
+
+  @keyframes fadeInRow {
+    from {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .logs-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(212, 244, 221, 0.65) 100%);
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 12px 36px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transform: translateY(-4px);
+  }
+
+  .logs-table tbody td {
+    color: #1a5f3b;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 16px 20px;
+    border: none;
+    vertical-align: middle;
+  }
+
+  .logs-table tbody td:first-child {
+    border-radius: 12px 0 0 12px;
+    font-weight: 700;
+    color: #10b981;
+  }
+
+  .logs-table tbody td:last-child {
+    border-radius: 0 12px 12px 0;
+    text-align: center;
+  }
+
+  .logs-table tbody td strong {
+    color: #059669;
+    font-weight: 700;
+  }
+
+  /* Log ID Badge */
+  .log-id {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.1) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: inline-block;
+    font-weight: 700;
+    color: #10b981;
+  }
+
+  /* File Name Cell */
+  .file-name-cell {
+    word-break: break-word;
+    max-width: 300px;
+  }
+
+  /* Created At Cell */
+  .created-at-cell {
+    color: rgba(26, 95, 59, 0.8);
+    font-size: 0.9rem;
+  }
+
+  /* Action Button */
+  .view-result-btn {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .view-result-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .view-result-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .view-result-btn:hover::before {
+    left: 100%;
+  }
+
+  .view-result-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Empty State */
+  .logs-empty-state {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.08) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .empty-text {
+    color: #1a5f3b;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  .empty-subtext {
+    color: rgba(26, 95, 59, 0.7);
+    font-size: 0.95rem;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .logs-container {
+      padding: 100px 20px 40px 20px;
+    }
+
+    .logs-header h2 {
+      font-size: 1.8rem;
+    }
+
+    .logs-table {
+      border-spacing: 0 8px;
+    }
+
+    .logs-table thead th,
+    .logs-table tbody td {
+      padding: 12px 16px;
+      font-size: 0.9rem;
+    }
+
+    .file-name-cell {
+      max-width: 200px;
+    }
+
+    .created-at-cell {
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .logs-container {
+      padding: 80px 20px 40px 20px;
+    }
+
+    .logs-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .logs-table {
+      border-spacing: 0 6px;
+    }
+
+    .logs-table thead th,
+    .logs-table tbody td {
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .view-result-btn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    .file-name-cell {
+      max-width: 150px;
+    }
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+<div class="logs-container">
+  <!-- Header -->
+  <div class="logs-header">
+    <h2>📋 Analysis History</h2>
+    <p>View all your file-based prediction logs</p>
+  </div>
+
+  <!-- Divider -->
+  <hr class="logs-divider" />
+
+  <!-- Logs Table or Empty State -->
+  {% if logs %}
+    <div class="logs-table-wrapper">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th scope="col">📌 Log ID</th>
+            <th scope="col">📄 File Name</th>
+            <th scope="col">⏰ Created At</th>
+            <th scope="col">🔍 Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td>
+                <span class="log-id">#{{ log.pk }}</span>
+              </td>
+              <td class="file-name-cell">{{ log.uploaded_file.name }}</td>
+              <td class="created-at-cell">{{ log.created_at|date:"M d, Y H:i" }}</td>
+              <td>
+                <a href="{% url 'pdf_log_detail' log.pk %}" class="view-result-btn">
+                  View Result
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="logs-empty-state">
+      <span class="empty-icon">📂</span>
+      <div class="empty-text">No logs available yet</div>
+      <div class="empty-subtext">Your analysis history will appear here once you upload and analyze a file</div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  // Add subtle interactions
+  document.querySelectorAll('.logs-table tbody tr').forEach((row, index) => {
+    row.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-4px)';
+    });
+
+    row.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+</script>
+
+{% endblock %}

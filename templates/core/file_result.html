@@ -1,0 +1,593 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}File Prediction Result - Agri AI{% endblock %}
+
+{% block content %}
+<style>
+  /* Page Container */
+  .result-container {
+    padding: 120px 20px 40px 20px;
+    min-height: calc(100vh - 200px);
+    animation: fadeInUp 0.8s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Page Header */
+  .result-header {
+    margin-bottom: 40px;
+    animation: slideDown 0.6s ease 0.2s both;
+  }
+
+  .result-header h2 {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #22c55e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    background-size: 300% auto;
+    animation: gradientFlow 6s ease infinite;
+  }
+
+  .result-header p {
+    color: #1a5f3b;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Divider */
+  .result-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    border: none;
+    margin-bottom: 32px;
+    border-radius: 2px;
+    animation: slideInRight 0.8s ease 0.4s both;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Main Content Wrapper */
+  .result-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+
+  /* File Preview Card */
+  .file-preview-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(212, 244, 221, 0.5) 100%);
+    border: 2.5px solid rgba(16, 185, 129, 0.4);
+    border-radius: 25px;
+    padding: 30px;
+    box-shadow: 0 12px 48px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 30px rgba(16, 185, 129, 0.15);
+    backdrop-filter: blur(15px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.8s ease 0.3s both;
+  }
+
+  .file-preview-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .file-preview-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(212, 244, 221, 0.65) 100%);
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 16px 60px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 1), 0 0 40px rgba(16, 185, 129, 0.2);
+    transform: translateY(-8px);
+  }
+
+  .file-preview-card:hover::before {
+    opacity: 1;
+  }
+
+  .preview-title {
+    color: #1a5f3b;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .preview-content {
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.8s ease 0.5s both;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .preview-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+    max-height: 450px;
+    object-fit: cover;
+  }
+
+  .pdf-placeholder {
+    padding: 80px 30px;
+    text-align: center;
+    color: #1a5f3b;
+    width: 100%;
+  }
+
+  .pdf-icon {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .pdf-text {
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #10b981;
+    font-size: 1.15rem;
+  }
+
+  .pdf-subtext {
+    font-size: 0.9rem;
+    color: rgba(26, 95, 59, 0.7);
+    margin-bottom: 20px;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+
+  .open-pdf-btn {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border: none;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+  }
+
+  .open-pdf-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .open-pdf-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+  }
+
+  .open-pdf-btn:hover::before {
+    left: 100%;
+  }
+
+  .open-pdf-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Prediction Output Card */
+  .prediction-output-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.05) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
+    backdrop-filter: blur(10px);
+    margin-bottom: 32px;
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  .output-title {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .prediction-content {
+    color: #1a5f3b;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .prediction-content h3 {
+    color: #10b981;
+    font-weight: 700;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-size: 1.05rem;
+  }
+
+  .prediction-content h4 {
+    color: #059669;
+    font-weight: 600;
+    margin-top: 16px;
+    margin-bottom: 10px;
+  }
+
+  .prediction-content ul,
+  .prediction-content ol {
+    margin-left: 20px;
+    margin-bottom: 12px;
+  }
+
+  .prediction-content li {
+    margin-bottom: 8px;
+  }
+
+  .prediction-content p {
+    margin-bottom: 12px;
+  }
+
+  /* Right Sidebar */
+  .result-sidebar {
+    animation: slideInRight 0.8s ease 0.5s both;
+  }
+
+  .action-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(52, 211, 153, 0.08) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    animation: fadeInRight 0.6s ease both;
+  }
+
+  .action-card:nth-child(1) { animation-delay: 0.5s; }
+  .action-card:nth-child(2) { animation-delay: 0.6s; }
+
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .action-card:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.15) 100%);
+    border-color: rgba(16, 185, 129, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
+  }
+
+  .action-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border: none;
+    color: #fff;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .action-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+  }
+
+  .action-btn:hover::before {
+    left: 100%;
+  }
+
+  .action-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+  }
+
+  .action-btn-secondary {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .action-btn-secondary:hover {
+    background: rgba(16, 185, 129, 0.25);
+    color: #059669;
+  }
+
+  .action-label {
+    color: #1a5f3b;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  /* Info Box */
+  .result-info {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.08) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 16px;
+    padding: 16px;
+    color: #1a5f3b;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 20px;
+    animation: slideInUp 0.8s ease 0.6s both;
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .result-wrapper {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .result-sidebar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .action-card {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .result-container {
+      padding: 100px 20px 40px 20px;
+    }
+
+    .result-header h2 {
+      font-size: 1.8rem;
+    }
+
+    .result-sidebar {
+      grid-template-columns: 1fr;
+    }
+
+    .file-preview-card {
+      padding: 20px;
+    }
+
+    .pdf-placeholder {
+      padding: 60px 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .result-container {
+      padding: 80px 20px 40px 20px;
+    }
+
+    .result-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .pdf-icon {
+      font-size: 2.5rem;
+    }
+
+    .pdf-text {
+      font-size: 1rem;
+    }
+
+    .result-sidebar {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media print {
+    .result-sidebar,
+    .action-card {
+      display: none;
+    }
+
+    .result-wrapper {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+<div class="result-container">
+  <!-- Header -->
+  <div class="result-header">
+    <h2>📊 Prediction Result</h2>
+    <p>AI-Powered Analysis and Insights</p>
+  </div>
+
+  <!-- Divider -->
+  <hr class="result-divider" />
+
+  <!-- Main Content Wrapper -->
+  <div class="result-wrapper">
+    <!-- Left Column - Content -->
+    <div>
+      <!-- File Preview Card -->
+      <div class="file-preview-card">
+        <div class="preview-title">
+          📄 Uploaded Document
+        </div>
+
+        {% if ".pdf" in record.uploaded_file.name|lower %}
+          <div class="preview-content">
+            <div class="pdf-placeholder">
+              <div class="pdf-icon">📕</div>
+              <div class="pdf-text">PDF Document</div>
+              <div class="pdf-subtext">{{ record.uploaded_file.name|truncatechars:50 }}</div>
+              <a href="{{ record.uploaded_file.url }}" target="_blank" class="open-pdf-btn" style="text-decoration: none;">
+                📖 Open PDF in New Tab
+              </a>
+            </div>
+          </div>
+        {% else %}
+          <div class="preview-content">
+            <img src="{{ record.uploaded_file.url }}" class="preview-image" alt="Uploaded file">
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Prediction Output Card -->
+      <div class="prediction-output-card">
+        <div class="output-title">
+          ✨ Analysis Results
+        </div>
+        <div class="prediction-content">
+          {{ formatted_output|safe }}
+        </div>
+      </div>
+
+      <!-- Info Box -->
+      <div class="result-info">
+        <strong>💡 Note:</strong> These predictions are AI-generated based on the uploaded document. Always cross-verify results with domain experts or conduct field tests for critical decisions.
+      </div>
+    </div>
+
+    <!-- Right Sidebar - Actions -->
+    <div class="result-sidebar">
+      <div class="action-card">
+        <button onclick="window.print()" class="action-btn">
+          🖨️ Print
+        </button>
+        <div class="action-label">Print Result</div>
+      </div>
+
+      <div class="action-card">
+        <a href="{% url 'pdf_logs' %}">
+            <button class="action-btn">
+          📋 View Logs
+        </button>
+          
+        </a>
+        <div class="action-label">Analysis History</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Smooth scroll animation on page load
+  window.addEventListener('load', () => {
+    document.documentElement.style.scrollBehavior = 'smooth';
+  });
+</script>
+
+{% endblock %}

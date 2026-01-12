@@ -39,3 +39,13 @@ class PredictionRecord(models.Model):
     suggestions_text = models.TextField()
     confidences_json = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+# ✅ New model for File-Based Prediction
+class FilePrediction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_file = models.FileField(upload_to="uploads/files/")
+    gemini_output = models.TextField()  # formatted text returned by Gemini
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"FilePrediction {self.pk} - {self.uploaded_file.name}"

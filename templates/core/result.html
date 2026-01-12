@@ -1,40 +1,598 @@
 {% extends 'base.html' %}
-{% block title %}Prediction Result{% endblock %}
+{% block title %}Prediction Result - Agri AI{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <h4 class="text-success mb-4">Prediction Result</h4>
+<style>
+  /* Page Container */
+  .result-container {
+    padding: 120px 20px 40px 20px;
+    min-height: calc(100vh - 200px);
+    animation: fadeInUp 0.8s ease;
+  }
 
-  <div class="p-4 rounded" 
-       style="background:#1a1a1a; border:1px solid rgba(0,255,0,0.3); box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-    
-    <div class="row mb-3">
-      <div class="col-sm-4 text-light fw-bold">Soil Class:</div>
-      <div class="col-sm-8 text-success">{{ record.soil_class }}</div>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Page Header */
+  .result-header {
+    margin-bottom: 40px;
+    animation: slideDown 0.6s ease 0.2s both;
+  }
+
+  .result-header h2 {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #22c55e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    background-size: 300% auto;
+    animation: gradientFlow 6s ease infinite;
+  }
+
+  .result-header p {
+    color: #1a5f3b;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Divider */
+  .result-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    border: none;
+    margin-bottom: 32px;
+    border-radius: 2px;
+    animation: slideInRight 0.8s ease 0.4s both;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Main Content Wrapper */
+  .result-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+
+  /* Result Card */
+  .result-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(212, 244, 221, 0.5) 100%);
+    border: 2.5px solid rgba(16, 185, 129, 0.4);
+    border-radius: 25px;
+    padding: 32px;
+    box-shadow: 0 12px 48px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 30px rgba(16, 185, 129, 0.15);
+    backdrop-filter: blur(15px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.8s ease 0.3s both;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .result-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(212, 244, 221, 0.65) 100%);
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 16px 60px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 1), 0 0 40px rgba(16, 185, 129, 0.2);
+    transform: translateY(-8px);
+  }
+
+  .result-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Result Sections */
+  .result-section {
+    animation: fadeInSection 0.6s ease both;
+    margin-bottom: 28px;
+  }
+
+  .result-section:nth-child(1) { animation-delay: 0.4s; }
+  .result-section:nth-child(2) { animation-delay: 0.5s; }
+  .result-section:nth-child(3) { animation-delay: 0.6s; }
+  .result-section:nth-child(4) { animation-delay: 0.7s; }
+  .result-section:nth-child(5) { animation-delay: 0.8s; }
+
+  @keyframes fadeInSection {
+    from {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .result-section:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Section Header */
+  .section-header {
+    font-weight: 700;
+    color: #1a5f3b;
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Section Divider */
+  .section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
+    border: none;
+    margin: 20px 0;
+  }
+
+  /* Info Row */
+  .info-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+
+  .info-label {
+    color: #1a5f3b;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .info-value {
+    color: #059669;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.08) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    backdrop-filter: blur(5px);
+  }
+
+  /* Image Card */
+  .image-card {
+    border-radius: 18px;
+    overflow: hidden;
+    margin: 24px 0;
+    animation: fadeIn 0.8s ease 0.7s both;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .image-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+    max-height: 400px;
+    object-fit: cover;
+  }
+
+  /* Content Text */
+  .content-text {
+    color: #1a5f3b;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .content-text h4 {
+    color: #10b981;
+    font-weight: 700;
+    margin-top: 16px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+
+  .content-text ul,
+  .content-text ol {
+    margin-left: 20px;
+    margin-bottom: 12px;
+  }
+
+  .content-text li {
+    margin-bottom: 8px;
+  }
+
+  .content-text p {
+    margin-bottom: 12px;
+  }
+
+  /* Right Sidebar */
+  .result-sidebar {
+    animation: slideInRight 0.8s ease 0.5s both;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Stat Card */
+  .stat-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(52, 211, 153, 0.08) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: fadeInRight 0.6s ease both;
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.5s; }
+  .stat-card:nth-child(2) { animation-delay: 0.6s; }
+  .stat-card:nth-child(3) { animation-delay: 0.7s; }
+
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .stat-card:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.15) 100%);
+    border-color: rgba(16, 185, 129, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  .stat-label {
+    color: #1a5f3b;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 1.3rem;
+  }
+
+  /* Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    animation: fadeInUp 0.8s ease 0.9s both;
+  }
+
+  .action-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border: none;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .action-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+  }
+
+  .action-btn:hover::before {
+    left: 100%;
+  }
+
+  .action-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+  }
+
+  .action-btn-secondary {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .action-btn-secondary:hover {
+    background: rgba(16, 185, 129, 0.25);
+    color: #059669;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .result-wrapper {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .result-sidebar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .result-container {
+      padding: 100px 20px 40px 20px;
+    }
+
+    .result-header h2 {
+      font-size: 1.8rem;
+    }
+
+    .result-card {
+      padding: 24px;
+    }
+
+    .result-sidebar {
+      grid-template-columns: 1fr;
+    }
+
+    .info-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .result-container {
+      padding: 80px 20px 40px 20px;
+    }
+
+    .result-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .result-card {
+      padding: 20px;
+    }
+
+    .stat-icon {
+      font-size: 1.5rem;
+    }
+
+    .result-sidebar {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media print {
+    .result-sidebar,
+    .action-buttons {
+      display: none;
+    }
+
+    .result-wrapper {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+<div class="result-container">
+  <!-- Header -->
+  <div class="result-header">
+    <h2>🌾 Prediction Result</h2>
+    <p>Soil Analysis Report</p>
+  </div>
+
+  <!-- Divider -->
+  <hr class="result-divider" />
+
+  <!-- Main Content Wrapper -->
+  <div class="result-wrapper">
+    <!-- Left Column - Result Details -->
+    <div>
+      <!-- Result Card -->
+      <div class="result-card">
+        <!-- Soil Class Section -->
+        <div class="result-section">
+          <div class="section-header">
+            🌱 Soil Classification
+          </div>
+          <div class="info-row">
+            <div class="info-label">Soil Class:</div>
+            <div class="info-value">{{ record.soil_class }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Confidence:</div>
+            <div class="info-value">{{ record.confidences_json.soil_confidence }}</div>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <!-- Fusion Quality Section -->
+        <div class="result-section">
+          <div class="section-header">
+            ✨ Fusion Quality
+          </div>
+          <div class="info-row">
+            <div class="info-label">Quality Score:</div>
+            <div class="info-value">{{ record.fusion_quality }}</div>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <!-- Fusion Summary Section -->
+        <div class="result-section">
+          <div class="section-header">
+            📋 Summary
+          </div>
+          <div class="content-text">
+            {{ fusion_summary_html|safe }}
+          </div>
+        </div>
+
+        <!-- Image -->
+        <div class="image-card">
+          <img src="{{ image.image.url }}" alt="Soil analysis image">
+        </div>
+
+        <hr class="section-divider" />
+
+        <!-- Suggestions Section -->
+        <div class="result-section">
+          <div class="section-header">
+            💡 Recommendations
+          </div>
+          <div class="content-text">
+            {{ suggestions_html|safe }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <a href="{% url 'logs' %}" class="action-btn action-btn-secondary">
+          ← Back to Logs
+        </a>
+        <button onclick="window.print()" class="action-btn">
+          🖨️ Print Result
+        </button>
+      </div>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-sm-4 text-light fw-bold">Confidence:</div>
-      <div class="col-sm-8">{{ record.confidences_json.soil_confidence }}</div>
-    </div>
+    <!-- Right Sidebar - Statistics -->
+    <div class="result-sidebar">
+      <div class="stat-card">
+        <span class="stat-icon">📊</span>
+        <div class="stat-label">Soil Class</div>
+        <div class="stat-value">{{ record.soil_class|slice:":1" }}</div>
+      </div>
 
-    <hr class="border-success">
+      <div class="stat-card">
+        <span class="stat-icon">🎯</span>
+        <div class="stat-label">Confidence</div>
+        <div class="stat-value">{{ record.confidences_json.soil_confidence|slice:":3" }}</div>
+      </div>
 
-    <div class="row mb-3">
-      <div class="col-sm-4 text-light fw-bold">Fusion Quality:</div>
-      <div class="col-sm-8">{{ record.fusion_quality }}</div>
-    </div>
-
-    <div class="row mb-3">
-      <div class="col-sm-4 text-light fw-bold">Summary:</div>
-      <div class="col-sm-8">{{ record.fusion_summary_text }}</div>
-    </div>
-
-    
-    
-    <div class="row mb-3">
-      <div class="col-sm-4 text-light fw-bold">Suggestions:</div>
-      <div class="col-sm-8">{{ record.suggestions_text }}</div>
+      <div class="stat-card">
+        <span class="stat-icon">⭐</span>
+        <div class="stat-label">Quality</div>
+        <div class="stat-value">{{ record.fusion_quality|slice:":3" }}</div>
+      </div>
     </div>
   </div>
 </div>
+
 {% endblock %}

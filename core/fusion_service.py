@@ -1,7 +1,7 @@
 from google import genai
 from django.conf import settings
 
-client = genai.Client(api_key="AIzaSyACklqM2e-vUSvium1p5FXQ__mMGh59aSg")
+client = genai.Client(api_key="AIzaSyDrbtzb0cwkBJVEUrPv2CWpmm1bkpOjroc")  # safer: keep key in settings
 
 class FusionService:
     @staticmethod
@@ -12,10 +12,10 @@ class FusionService:
         Returns dict with fusion_quality, summary, suggestions (from Gemini).
         """
 
-        soil_class = soil_result["soil_class"]
-        weed_presence = weed_result["weed_presence"]
+        soil_class = soil_result.get("soil_class")
+        weed_presence = weed_result.get("weed_presence")
 
-        # Fusion quality + summary logic (still deterministic)
+        # Fusion quality + summary logic
         if soil_class == "Suitable" and not weed_presence:
             fusion_quality = "Good"
             summary = "Soil is suitable and no weeds detected."
@@ -23,18 +23,20 @@ class FusionService:
             fusion_quality = "Moderate"
             summary = "Soil is suitable but weeds detected."
         elif soil_class == "Unsuitable" and not weed_presence:
-            fusion_quality = "Poor"
+            fusion_quality = "Good"
             summary = "Soil is unsuitable despite no weeds."
         else:  # Unsuitable + Weeds
             fusion_quality = "Bad"
             summary = "Soil is unsuitable and weeds detected."
 
-        # 🔹 Ask Gemini for suggestions (single paragraph, 2–3 sentences)
+        # 🔹 Ask Gemini for suggestions
         prompt = (
             f"Soil class: {soil_class}. "
             f"Weed presence: {weed_presence}. "
+            "Talk about above conditions"
             "Based on these conditions, provide practical farming suggestions "
-            "in a single paragraph of 2–3 sentences."
+            "Give brief concise, most useful suggestions or solutions relating to the given conditions"
+            "Use bold labels and bullet points. "
         )
 
         try:
@@ -42,11 +44,14 @@ class FusionService:
                 model="models/gemini-2.5-flash",
                 contents=[{"role": "user", "parts": [{"text": prompt}]}],
             )
-            suggestions = response.text.strip()
-            suggestions = suggestions.replace("*", "")
-            suggestions = suggestions.replace("#", "")
+            # Extract text safely
+            if hasattr(response, "text"):
+                suggestions = response.text.strip()
+            elif hasattr(response, "candidates"):
+                suggestions = response.candidates[0].content.parts[0].text.strip()
+            else:
+                suggestions = "No AI suggestions available."
         except Exception as e:
-            # Fallback if Gemini fails
             suggestions = "Unable to fetch AI suggestions at the moment. Please rely on standard agronomy practices."
 
         return {

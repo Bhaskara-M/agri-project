@@ -47,11 +47,9 @@ def signup_view(request):
 
 from .ml_service import SoilModelService
 from .forms import SoilForm, ImageForm
-from .models import SoilInput, ImageInput, PredictionRecord
+from .models import SoilInput, ImageInput, PredictionRecord, FilePrediction
 from .gemini_service import GeminiWeedService
 from .fusion_service import FusionService
-
-
 
 @login_required
 def predict_view(request):
@@ -91,7 +89,6 @@ def predict_view(request):
                 fusion_quality=fusion_result["fusion_quality"],
                 fusion_summary_text=fusion_result["fusion_summary_text"],
                 suggestions_text=fusion_result["suggestions_text"]
-
             )
 
             return redirect("result", pk=record.pk)
@@ -104,12 +101,27 @@ def predict_view(request):
         "image_form": image_form
     })
 
+import markdown2
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from .models import PredictionRecord
+
 @login_required
 def result_view(request, pk):
+
     record = get_object_or_404(PredictionRecord, pk=pk)
-    suggestions_list = record.suggestions if hasattr(record, "suggestions") else []
-    return render(request, "core/result.html", {"record": record, "suggestions_list": suggestions_list
-})
+    image = get_object_or_404(ImageInput, pk=pk)
+
+    # Convert fusion summary + suggestions from Markdown → HTML
+    fusion_summary_html = markdown2.markdown(record.fusion_summary_text or "")
+    suggestions_html = markdown2.markdown(record.suggestions_text or "")
+
+    return render(request, "core/result.html", {
+        "record": record,
+        "fusion_summary_html": fusion_summary_html,
+        "suggestions_html": suggestions_html,
+        "image": image,
+    })
 
 
 @login_required
@@ -119,3 +131,80 @@ def logs_view(request):
     return render(request, "core/logs.html", {"records": records})
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
+
+from .models import FilePrediction
+from .gemini_service import GeminiWeedService
+
+
+# ✅ File-Based Prediction Views
+@login_required
+def predict_file_view(request):
+    """
+    Handles file upload and runs Gemini analysis.
+    """
+    if request.method == "POST" and request.FILES.get("file"):
+        uploaded_file = request.FILES["file"]
+
+        # Analyze file with Gemini (plain text output)
+        uploaded_file.seek(0)
+        analysis_text = GeminiWeedService.analyze_file(uploaded_file)
+
+        # Save result in FilePrediction
+        file_record = FilePrediction.objects.create(
+            user=request.user,
+            uploaded_file=uploaded_file,
+            gemini_output=analysis_text
+        )
+
+        # Redirect to result page
+        return redirect("file_result", pk=file_record.pk)
+
+    return render(request, "core/predict_file.html")
+
+
+@login_required
+def file_result_view(request, pk):
+    """
+    Displays the result page for a file prediction.
+    """
+    file_record = get_object_or_404(FilePrediction, pk=pk, user=request.user)
+    return render(request, "core/file_result.html", {"record": file_record})
+
+
+import markdown2
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
+from .models import FilePrediction
+
+@login_required
+def file_result_view(request, pk):
+    file_record = get_object_or_404(FilePrediction, pk=pk, user=request.user)
+
+    # Convert Markdown (Gemini output) → HTML
+    formatted_output = markdown2.markdown(file_record.gemini_output)
+
+    return render(
+        request,
+        "core/file_result.html",
+        {"record": file_record, "formatted_output": formatted_output}
+    )
+
+from django.shortcuts import render
+from .models import FilePrediction
+
+@login_required
+def pdf_logs_view(request):
+    # Fetch all predictions for the logged-in user
+    logs = FilePrediction.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'core/pdf_logs.html', {'logs': logs})
+
+# from django.shortcuts import render, get_object_or_404
+# from .models import FilePrediction
+
+# def pdf_log_detail_view(request, pk):
+#     # Fetch the specific prediction
+#     log = get_object_or_404(FilePrediction, pk=pk, user=request.user)
+#     return render(request, '', {'log': log})

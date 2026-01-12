@@ -1,43 +1,471 @@
 {% extends 'base.html' %}
-{% block title %}Prediction Logs{% endblock %}
+{% block title %}Manual Prediction Logs - Agri AI{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <h4 class="text-success mb-3">My Prediction Logs</h4>
-  <table class="table table-dark table-hover align-middle border border-success">
-    <thead class="table-success text-dark">
-      <tr>
-        <th scope="col">Date</th>
-        <th scope="col">Crop</th>
-        <th scope="col">Soil Class</th>
-        <th scope="col">Weed Presence</th>
-        <th scope="col">Fusion Quality</th>
-        <th scope="col">Details</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for record in records %}
-      <tr>
-        <td>{{ record.created_at|date:"Y-m-d H:i" }}</td>
-        <td>{{ record.soil.crop_name }}</td>
-        <td>{{ record.soil_class }}</td>
-        <td>
-          {% if record.weed_presence %}
-            <span class="badge bg-success">Yes</span>
-          {% else %}
-            <span class="badge bg-danger">No</span>
-          {% endif %}
-        </td>
-        <td>{{ record.fusion_quality }}</td>
-        <td>
-          <a href="{% url 'result' record.pk %}" class="btn btn-sm btn-pro">View</a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="6" class="text-center text-muted">No predictions yet.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<style>
+  /* Page Container */
+  .manual-logs-container {
+    padding: 120px 20px 40px 20px;
+    min-height: calc(100vh - 200px);
+    animation: fadeInUp 0.8s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Page Header */
+  .manual-logs-header {
+    margin-bottom: 40px;
+    animation: slideDown 0.6s ease 0.2s both;
+  }
+
+  .manual-logs-header h2 {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #22c55e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    background-size: 300% auto;
+    animation: gradientFlow 6s ease infinite;
+  }
+
+  .manual-logs-header p {
+    color: #1a5f3b;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Divider */
+  .manual-logs-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399, #22c55e);
+    border: none;
+    margin-bottom: 32px;
+    border-radius: 2px;
+    animation: slideInRight 0.8s ease 0.4s both;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Manual Logs Table Container */
+  .manual-logs-table-wrapper {
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  /* Table Styles */
+  .manual-logs-table {
+    border-collapse: separate;
+    border-spacing: 0 12px;
+    width: 100%;
+  }
+
+  .manual-logs-table thead {
+    position: relative;
+    z-index: 10;
+  }
+
+  .manual-logs-table thead th {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.1) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 16px 20px;
+    text-align: left;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+  }
+
+  .manual-logs-table thead th:first-child {
+    border-radius: 12px 0 0 12px;
+  }
+
+  .manual-logs-table thead th:last-child {
+    border-radius: 0 12px 12px 0;
+    text-align: center;
+  }
+
+  /* Table Body Rows - Individual Glassy Cards */
+  .manual-logs-table tbody tr {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(212, 244, 221, 0.5) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: fadeInRow 0.6s ease both;
+  }
+
+  .manual-logs-table tbody tr:nth-child(1) { animation-delay: 0.5s; }
+  .manual-logs-table tbody tr:nth-child(2) { animation-delay: 0.55s; }
+  .manual-logs-table tbody tr:nth-child(3) { animation-delay: 0.6s; }
+  .manual-logs-table tbody tr:nth-child(4) { animation-delay: 0.65s; }
+  .manual-logs-table tbody tr:nth-child(5) { animation-delay: 0.7s; }
+  .manual-logs-table tbody tr:nth-child(n+6) { animation-delay: 0.75s; }
+
+  @keyframes fadeInRow {
+    from {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .manual-logs-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(212, 244, 221, 0.65) 100%);
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 12px 36px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transform: translateY(-4px);
+  }
+
+  .manual-logs-table tbody td {
+    color: #1a5f3b;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 16px 20px;
+    border: none;
+    vertical-align: middle;
+  }
+
+  .manual-logs-table tbody td:first-child {
+    border-radius: 12px 0 0 12px;
+    font-weight: 600;
+    color: #10b981;
+    font-size: 0.9rem;
+  }
+
+  .manual-logs-table tbody td:last-child {
+    border-radius: 0 12px 12px 0;
+    text-align: center;
+  }
+
+  /* Crop Name Cell */
+  .crop-name-cell {
+    font-weight: 700;
+    color: #059669;
+  }
+
+  /* Soil Class Cell */
+  .soil-class-cell {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.1) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: inline-block;
+    font-weight: 600;
+    color: #10b981;
+  }
+
+  /* Weed Presence Badge */
+  .weed-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: inline-block;
+  }
+
+  .weed-badge-yes {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.15) 100%);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+  }
+
+  .weed-badge-no {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(239, 68, 68, 0.1) 100%);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+
+  /* Fusion Quality Cell */
+  .fusion-quality-cell {
+    font-weight: 600;
+    color: #059669;
+  }
+
+  /* View Button */
+  .view-prediction-btn {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .view-prediction-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .view-prediction-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .view-prediction-btn:hover::before {
+    left: 100%;
+  }
+
+  .view-prediction-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Empty State */
+  .manual-logs-empty-state {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.08) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  .empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .empty-text {
+    color: #1a5f3b;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  .empty-subtext {
+    color: rgba(26, 95, 59, 0.7);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 1024px) {
+    .manual-logs-table {
+      font-size: 0.9rem;
+    }
+
+    .manual-logs-table thead th,
+    .manual-logs-table tbody td {
+      padding: 14px 16px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .manual-logs-container {
+      padding: 100px 20px 40px 20px;
+    }
+
+    .manual-logs-header h2 {
+      font-size: 1.8rem;
+    }
+
+    .manual-logs-table {
+      border-spacing: 0 8px;
+      font-size: 0.85rem;
+    }
+
+    .manual-logs-table thead th,
+    .manual-logs-table tbody td {
+      padding: 12px 14px;
+      font-size: 0.85rem;
+    }
+
+    .soil-class-cell {
+      padding: 4px 10px;
+    }
+
+    .weed-badge {
+      padding: 5px 12px;
+      font-size: 0.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .manual-logs-container {
+      padding: 80px 20px 40px 20px;
+    }
+
+    .manual-logs-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .manual-logs-table {
+      border-spacing: 0 6px;
+      font-size: 0.8rem;
+    }
+
+    .manual-logs-table thead th,
+    .manual-logs-table tbody td {
+      padding: 10px 12px;
+      font-size: 0.8rem;
+    }
+
+    .view-prediction-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .empty-text {
+      font-size: 1.1rem;
+    }
+
+    .empty-subtext {
+      font-size: 0.9rem;
+    }
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+<div class="manual-logs-container">
+  <!-- Header -->
+  <div class="manual-logs-header">
+    <h2>📊 Manual Prediction Logs</h2>
+    <p>View all your soil analysis predictions</p>
+  </div>
+
+  <!-- Divider -->
+  <hr class="manual-logs-divider" />
+
+  <!-- Manual Logs Table or Empty State -->
+  {% if records %}
+    <div class="manual-logs-table-wrapper">
+      <table class="manual-logs-table">
+        <thead>
+          <tr>
+            <th scope="col">📅 Date</th>
+            <th scope="col">🌾 Crop</th>
+            <th scope="col">🌱 Soil Class</th>
+            <th scope="col">🚫 Weed Presence</th>
+            <th scope="col">✨ Fusion Quality</th>
+            <th scope="col">🔍 Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+            <tr>
+              <td>{{ record.created_at|date:"M d, Y H:i" }}</td>
+              <td class="crop-name-cell">{{ record.soil.crop_name }}</td>
+              <td>
+                <span class="soil-class-cell">{{ record.soil_class }}</span>
+              </td>
+              <td>
+                {% if record.weed_presence %}
+                  <span class="weed-badge weed-badge-yes">✓ Yes</span>
+                {% else %}
+                  <span class="weed-badge weed-badge-no">✗ No</span>
+                {% endif %}
+              </td>
+              <td class="fusion-quality-cell">{{ record.fusion_quality }}</td>
+              <td>
+                <a href="{% url 'result' record.pk %}" class="view-prediction-btn">
+                  View
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="manual-logs-empty-state">
+      <span class="empty-icon">🌾</span>
+      <div class="empty-text">No predictions yet</div>
+      <div class="empty-subtext">Start by making a manual soil prediction to see your analysis history here</div>
+    </div>
+  {% endif %}
 </div>
+
+<script>
+  // Add subtle interactions
+  document.querySelectorAll('.manual-logs-table tbody tr').forEach((row, index) => {
+    row.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-4px)';
+    });
+
+    row.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+</script>
+
 {% endblock %}
