@@ -54,8 +54,13 @@ from .fusion_service import FusionService
 @login_required
 def predict_view(request):
     if request.method == "POST":
+        print("predict_view POST received")
+        print(f"POST keys: {list(request.POST.keys())}")
+        print(f"FILES keys: {list(request.FILES.keys())}")
         soil_form = SoilForm(request.POST)
         image_form = ImageForm(request.POST, request.FILES)
+        print(f"soil_form.is_valid(): {soil_form.is_valid()}")
+        print(f"image_form.is_valid(): {image_form.is_valid()}")
         if soil_form.is_valid() and image_form.is_valid():
             # Save soil input
             soil = soil_form.save(commit=False)
@@ -71,7 +76,11 @@ def predict_view(request):
             try:
                 result = SoilModelService.predict(soil_form.cleaned_data)
             except Exception as e:
-                messages.error(request, f"Error running soil prediction: {str(e)}")
+                err = f"Error running soil prediction: {str(e)}"
+                print(err)
+                # Attach to a visible field so the UI shows it even if messages aren't rendered
+                soil_form.add_error("crop_name", err)
+                messages.error(request, err)
                 return render(request, "core/predict.html", {
                     "soil_form": soil_form,
                     "image_form": image_form
@@ -133,9 +142,14 @@ def predict_view(request):
                     suggestions_text=fusion_result["suggestions_text"]
                 )
 
+                print(f"PredictionRecord created pk={record.pk}; redirecting to result")
                 return redirect("result", pk=record.pk)
             except Exception as e:
-                messages.error(request, f"Error saving prediction: {str(e)}")
+                err = f"Error saving prediction: {str(e)}"
+                print(err)
+                # Attach to a visible field so the UI shows it even if messages aren't rendered
+                soil_form.add_error("crop_name", err)
+                messages.error(request, err)
                 return render(request, "core/predict.html", {
                     "soil_form": soil_form,
                     "image_form": image_form
