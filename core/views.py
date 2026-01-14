@@ -67,31 +67,79 @@ def predict_view(request):
             image.user = request.user
             image.save()
 
-            # Run soil model (P)
-            result = SoilModelService.predict(soil_form.cleaned_data)
+            # Run soil model (P) - This should always work
+            try:
+                result = SoilModelService.predict(soil_form.cleaned_data)
+            except Exception as e:
+                messages.error(request, f"Error running soil prediction: {str(e)}")
+                return render(request, "core/predict.html", {
+                    "soil_form": soil_form,
+                    "image_form": image_form
+                })
 
-            # Weed detection (Q)
-            weed_result = GeminiWeedService.analyze_image(image.image.path)
+            # Weed detection (Q) - Handle Gemini API failures gracefully
+            try:
+                weed_result = GeminiWeedService.analyze_image(image.image.path)
+            except Exception as e:
+                # Fallback when Gemini API fails (e.g., API key issues)
+                print(f"Warning: Gemini API error: {str(e)}")
+                weed_result = {
+                    "weed_presence": False,
+                    "weed_details_json": {"error": "Weed detection service unavailable", "raw_response": None}
+                }
 
-            # Fusion (R)
-            fusion_result = FusionService.fuse_results(result, weed_result)
+            # Fusion (R) - Handle fusion service failures gracefully
+            try:
+                fusion_result = FusionService.fuse_results(result, weed_result)
+            except Exception as e:
+                # Fallback when fusion service fails
+                print(f"Warning: Fusion service error: {str(e)}")
+                # Create basic fusion result based on soil prediction only
+                soil_class = result.get("soil_class", "Unknown")
+                weed_presence = weed_result.get("weed_presence", False)
+                
+                if soil_class == "Suitable" and not weed_presence:
+                    fusion_quality = "Good"
+                    summary = "Soil is suitable and no weeds detected."
+                elif soil_class == "Suitable" and weed_presence:
+                    fusion_quality = "Moderate"
+                    summary = "Soil is suitable but weeds detected."
+                elif soil_class == "Unsuitable" and not weed_presence:
+                    fusion_quality = "Moderate"
+                    summary = "Soil conditions need improvement. No weeds detected."
+                else:
+                    fusion_quality = "Bad"
+                    summary = "Soil is unsuitable and weeds detected."
+                
+                fusion_result = {
+                    "fusion_quality": fusion_quality,
+                    "fusion_summary_text": summary,
+                    "suggestions_text": "AI suggestions unavailable. Please consult with agricultural experts for recommendations.",
+                }
 
             # Save prediction record
-            record = PredictionRecord.objects.create(
-                user=request.user,
-                soil=soil,
-                image=image,
-                soil_score=result["soil_score"],
-                soil_class=result["soil_class"],
-                confidences_json={"soil_confidence": result["confidence"]},
-                weed_presence=weed_result["weed_presence"],
-                weed_details_json=weed_result["weed_details_json"],
-                fusion_quality=fusion_result["fusion_quality"],
-                fusion_summary_text=fusion_result["fusion_summary_text"],
-                suggestions_text=fusion_result["suggestions_text"]
-            )
+            try:
+                record = PredictionRecord.objects.create(
+                    user=request.user,
+                    soil=soil,
+                    image=image,
+                    soil_score=result["soil_score"],
+                    soil_class=result["soil_class"],
+                    confidences_json={"soil_confidence": result["confidence"]},
+                    weed_presence=weed_result["weed_presence"],
+                    weed_details_json=weed_result["weed_details_json"],
+                    fusion_quality=fusion_result["fusion_quality"],
+                    fusion_summary_text=fusion_result["fusion_summary_text"],
+                    suggestions_text=fusion_result["suggestions_text"]
+                )
 
-            return redirect("result", pk=record.pk)
+                return redirect("result", pk=record.pk)
+            except Exception as e:
+                messages.error(request, f"Error saving prediction: {str(e)}")
+                return render(request, "core/predict.html", {
+                    "soil_form": soil_form,
+                    "image_form": image_form
+                })
     else:
         soil_form = SoilForm()
         image_form = ImageForm()

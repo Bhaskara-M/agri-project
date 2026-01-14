@@ -10,9 +10,15 @@ class GeminiWeedService:
         """
         Analyze crop image for weed detection using Gemini.
         Returns dict with weed_presence (True/False) and weed_details_json.
+        
+        Raises:
+            Exception: If API call fails or image cannot be read
         """
-        with open(image_path, "rb") as f:
-            image_bytes = f.read()
+        try:
+            with open(image_path, "rb") as f:
+                image_bytes = f.read()
+        except Exception as e:
+            raise Exception(f"Error reading image file: {str(e)}")
 
         prompt = (
             "Analyze this agricultural file and provide results in Markdown format. "
@@ -22,34 +28,38 @@ class GeminiWeedService:
             "- Suggestions: Provide practical recommendations as bullet points"
         )
 
-        response = client.models.generate_content(
-            model="models/gemini-2.5-flash",
-            contents=[
-                {
-                    "role": "user",
-                    "parts": [
-                        {"text": prompt},
-                        {"inline_data": {"mime_type": "image/jpeg", "data": image_bytes}},
-                    ],
-                }
-            ],
-        )
+        try:
+            response = client.models.generate_content(
+                model="models/gemini-2.5-flash",
+                contents=[
+                    {
+                        "role": "user",
+                        "parts": [
+                            {"text": prompt},
+                            {"inline_data": {"mime_type": "image/jpeg", "data": image_bytes}},
+                        ],
+                    }
+                ],
+            )
 
-        result_text = (response.text or "").strip().lower()
+            result_text = (response.text or "").strip().lower()
 
-        if "present" in result_text:
-            weed_presence = True
-        elif "absent" in result_text:
-            weed_presence = False
-        else:
-            weed_presence = "weed" in result_text
+            if "present" in result_text:
+                weed_presence = True
+            elif "absent" in result_text:
+                weed_presence = False
+            else:
+                weed_presence = "weed" in result_text
 
-        weed_details = {"raw_response": response.text}
+            weed_details = {"raw_response": response.text}
 
-        return {
-            "weed_presence": weed_presence,
-            "weed_details_json": weed_details,
-        }
+            return {
+                "weed_presence": weed_presence,
+                "weed_details_json": weed_details,
+            }
+        except Exception as e:
+            # Re-raise with more context
+            raise Exception(f"Gemini API error: {str(e)}")
 
     @staticmethod
     def analyze_file(file_obj):
