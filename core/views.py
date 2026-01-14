@@ -140,6 +140,9 @@ def predict_view(request):
                     "soil_form": soil_form,
                     "image_form": image_form
                 })
+        else:
+            # Surface form errors to the user instead of silently refreshing
+            messages.error(request, "Please correct the highlighted fields.")
     else:
         soil_form = SoilForm()
         image_form = ImageForm()
@@ -198,7 +201,15 @@ def predict_file_view(request):
 
         # Analyze file with Gemini (plain text output)
         uploaded_file.seek(0)
-        analysis_text = GeminiWeedService.analyze_file(uploaded_file)
+        try:
+            analysis_text = GeminiWeedService.analyze_file(uploaded_file)
+        except Exception as e:
+            # Graceful fallback when the Gemini API key is invalid or blocked
+            analysis_text = (
+                "Unable to fetch AI suggestions at the moment. "
+                "Please update the Gemini API key in settings or environment. "
+                f"(Error: {str(e)})"
+            )
 
         # Save result in FilePrediction
         file_record = FilePrediction.objects.create(

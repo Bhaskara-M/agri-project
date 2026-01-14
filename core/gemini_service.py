@@ -1,8 +1,14 @@
 import google.genai as genai   # ✅ correct import if you installed `google-genai`
 from django.conf import settings
+import os
 
-# Configure Gemini API
-client = genai.Client(api_key="AIzaSyDrbtzb0cwkBJVEUrPv2CWpmm1bkpOjroc")  # ⚠️ Replace with settings.GEMINI_API_KEY if stored securely
+# Configure Gemini API, prefer env/settings to avoid leaked keys
+api_key = getattr(settings, "GEMINI_API_KEY", None) or os.environ.get("GEMINI_API_KEY")
+# Fallback to existing key only if nothing else is provided (should be replaced)
+if not api_key:
+    api_key = "AIzaSyDrbtzb0cwkBJVEUrPv2CWpmm1bkpOjroc"
+
+client = genai.Client(api_key=api_key)
 
 class GeminiWeedService:
     @staticmethod
