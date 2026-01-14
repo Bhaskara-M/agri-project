@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,6 +25,10 @@ SECRET_KEY = 'django-insecure-692h&d#ae81j#tivw)85(p^&l!qds%t$y%7#-y1!kaoxj-4a0t
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+# Gemini API key (do NOT hardcode secrets here; set via environment variable)
+# Example (PowerShell, current session): $env:GEMINI_API_KEY="your_key"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 ALLOWED_HOSTS = []
 
