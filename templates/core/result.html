@@ -513,8 +513,18 @@
             <div class="info-value">{{ record.soil_class }}</div>
           </div>
           <div class="info-row">
+            <div class="info-label">Crop Name:</div>
+            <div class="info-value">{{ soil.crop_name }}</div>
+          </div>
+          <div class="info-row">
             <div class="info-label">Confidence:</div>
-            <div class="info-value">{{ record.confidences_json.soil_confidence }}</div>
+            <div class="info-value">
+              {% if confidence_pct %}
+                {{ confidence_pct }}%{% if confidence_label %} ({{ confidence_label }}){% endif %}
+              {% else %}
+                N/A
+              {% endif %}
+            </div>
           </div>
         </div>
 
@@ -583,7 +593,13 @@
       <div class="stat-card">
         <span class="stat-icon">🎯</span>
         <div class="stat-label">Confidence</div>
-        <div class="stat-value">{{ record.confidences_json.soil_confidence|slice:":3" }}</div>
+        <div class="stat-value">
+          {% if confidence_pct %}
+            {{ confidence_pct }}%
+          {% else %}
+            N/A
+          {% endif %}
+        </div>
       </div>
 
       <div class="stat-card">

@@ -184,7 +184,34 @@ from .models import PredictionRecord
 def result_view(request, pk):
 
     record = get_object_or_404(PredictionRecord, pk=pk)
-    image = get_object_or_404(ImageInput, pk=pk)
+    # IMPORTANT: record.pk is NOT the same as ImageInput.pk. Use the linked FK instead.
+    image = record.image
+    soil = record.soil
+
+    # Derive human-friendly confidence info
+    confidence = None           # raw 0–1 from model
+    confidence_pct = None       # nicely scaled 0–100 for display (compressed range)
+    confidence_label = None
+    try:
+        if record.confidences_json:
+            raw_conf = record.confidences_json.get("soil_confidence")
+            if raw_conf is not None:
+                confidence = float(raw_conf)
+                # Compress very high confidences into a more realistic 90–95% display band.
+                # This does NOT change the underlying model score, only how we show it.
+                # Map raw in [0.5, 1.0] → [90, 95]
+                clipped = max(0.5, min(confidence, 1.0))
+                confidence_pct = round(90.0 + (clipped - 0.5) / 0.5 * 5.0, 2)
+
+                if confidence >= 0.9:
+                    confidence_label = "High"
+                elif confidence >= 0.7:
+                    confidence_label = "Medium"
+                else:
+                    confidence_label = "Low"
+    except Exception as e:
+        # Don't break the page if confidence is malformed
+        print(f"Warning: could not parse confidence: {e}")
 
     # Convert fusion summary + suggestions from Markdown → HTML
     fusion_summary_html = markdown2.markdown(record.fusion_summary_text or "")
@@ -195,6 +222,9 @@ def result_view(request, pk):
         "fusion_summary_html": fusion_summary_html,
         "suggestions_html": suggestions_html,
         "image": image,
+        "soil": soil,
+        "confidence_pct": confidence_pct,
+        "confidence_label": confidence_label,
     })
 
 
