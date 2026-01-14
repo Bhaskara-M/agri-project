@@ -1,7 +1,10 @@
 from google import genai
 from django.conf import settings
+import os
 
-client = genai.Client(api_key="AIzaSyDrbtzb0cwkBJVEUrPv2CWpmm1bkpOjroc")  # safer: keep key in settings
+# SECURITY: Do not hardcode API keys in source. Use env var or settings instead.
+api_key = os.environ.get("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", None)
+client = genai.Client(api_key=api_key) if api_key else None
 
 class FusionService:
     @staticmethod
@@ -40,6 +43,8 @@ class FusionService:
         )
 
         try:
+            if client is None:
+                raise Exception("Gemini API key not configured. Set GEMINI_API_KEY in env or settings.")
             response = client.models.generate_content(
                 model="models/gemini-2.5-flash",
                 contents=[{"role": "user", "parts": [{"text": prompt}]}],

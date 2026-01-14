@@ -141,8 +141,17 @@ def predict_view(request):
                     "image_form": image_form
                 })
         else:
-            # Surface form errors to the user instead of silently refreshing
-            messages.error(request, "Please correct the highlighted fields.")
+            # Surface form errors to the user instead of silently refreshing.
+            # We include the exact form errors so it's obvious what's blocking the redirect
+            # (commonly: missing image upload, invalid numeric ranges, etc.).
+            if soil_form.errors:
+                print(f"SoilForm errors: {soil_form.errors.as_json()}")
+                messages.error(request, f"Soil input error(s): {soil_form.errors.as_text()}")
+            if image_form.errors:
+                print(f"ImageForm errors: {image_form.errors.as_json()}")
+                messages.error(request, f"Image upload error(s): {image_form.errors.as_text()}")
+            if not soil_form.errors and not image_form.errors:
+                messages.error(request, "Form submission failed validation. Please review your inputs.")
     else:
         soil_form = SoilForm()
         image_form = ImageForm()

@@ -2,13 +2,14 @@ import google.genai as genai   # ✅ correct import if you installed `google-gen
 from django.conf import settings
 import os
 
-# Configure Gemini API, prefer env/settings to avoid leaked keys
-api_key = getattr(settings, "GEMINI_API_KEY", None) or os.environ.get("GEMINI_API_KEY")
-# Fallback to existing key only if nothing else is provided (should be replaced)
+# Configure Gemini API.
+# SECURITY: Do not hardcode API keys in source. Use env var or settings instead.
+api_key = os.environ.get("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", None)
 if not api_key:
-    api_key = "AIzaSyDrbtzb0cwkBJVEUrPv2CWpmm1bkpOjroc"
-
-client = genai.Client(api_key=api_key)
+    # Defer failure to runtime with a clear error message (handled by callers).
+    client = None
+else:
+    client = genai.Client(api_key=api_key)
 
 class GeminiWeedService:
     @staticmethod
@@ -33,6 +34,9 @@ class GeminiWeedService:
             "- Soil Suitability: Suitable or Not Suitable\n"
             "- Suggestions: Provide practical recommendations as bullet points"
         )
+
+        if client is None:
+            raise Exception("Gemini API key not configured. Set GEMINI_API_KEY in env or settings.")
 
         try:
             response = client.models.generate_content(
@@ -88,6 +92,9 @@ class GeminiWeedService:
             "- Soil Suitability: Suitable or Not Suitable\n"
             "- Suggestions: Provide practical recommendations as bullet points"
         )
+
+        if client is None:
+            raise Exception("Gemini API key not configured. Set GEMINI_API_KEY in env or settings.")
 
         response = client.models.generate_content(
             model="models/gemini-2.5-flash",
