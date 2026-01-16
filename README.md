@@ -32,7 +32,7 @@ You need:
 
 * Python **>=3.8**
 * `pip` package manager
-* Optional: virtual environment tool (recommended)
+* Virtual environment tool (recommended)
 
 ---
 
